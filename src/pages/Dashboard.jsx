@@ -25,15 +25,33 @@ import {
   GitBranchPlus,
   Rocket,
   Wand2,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const RepoStatus = ({ status }) => {
-  if (status === "ready-to-deploy") {
+  if (status === "deployed") {
     return (
       <Badge className="bg-green-500/10 text-green-400 border-green-500/20">
         <CheckCircle className="mr-2 h-4 w-4" />
-        Ready to Deploy
+        Deployed
+      </Badge>
+    );
+  }
+  if (status === "deploying") {
+    return (
+      <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">
+        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+        Deploying...
       </Badge>
     );
   }
@@ -51,6 +69,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [settingUp, setSettingUp] = useState({});
+  const [envModalOpen, setEnvModalOpen] = useState(false);
+  const [envVars, setEnvVars] = useState([{ key: "", value: "" }]);
+  const [selectedRepo, setSelectedRepo] = useState(null);
 
   const fetchRepos = async () => {
     setLoading(true);
@@ -97,13 +118,77 @@ const Dashboard = () => {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to setup workflow");
       }
-      // No alert needed, UI will update reactively
       await fetchRepos();
     } catch (err) {
       console.error(err);
       alert(`Failed to setup workflow: ${err.message}`);
     } finally {
       setSettingUp((prev) => ({ ...prev, [`${owner}/${repoName}`]: false }));
+    }
+  };
+
+  const openEnvModal = (repo) => {
+    setSelectedRepo(repo);
+    setEnvVars([{ key: "", value: "" }]);
+    setEnvModalOpen(true);
+  };
+
+  const closeEnvModal = () => {
+    setEnvModalOpen(false);
+    setSelectedRepo(null);
+  };
+
+  const handleEnvVarChange = (idx, field, value) => {
+    setEnvVars((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const addEnvVar = () => {
+    setEnvVars((prev) => [...prev, { key: "", value: "" }]);
+  };
+
+  const removeEnvVar = (idx) => {
+    setEnvVars((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDeployWithEnv = async () => {
+    if (!selectedRepo) return;
+    setSettingUp((prev) => ({
+      ...prev,
+      [`${selectedRepo.owner.login}/${selectedRepo.name}`]: true,
+    }));
+    try {
+      const env = envVars.filter((e) => e.key.trim() !== "");
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/github/repos/${
+          selectedRepo.id
+        }/setup`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            repoName: selectedRepo.name,
+            ownerLogin: selectedRepo.owner.login,
+            envVars: env,
+          }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to setup workflow");
+      }
+      await fetchRepos();
+      closeEnvModal();
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to setup workflow: ${err.message}`);
+    } finally {
+      setSettingUp((prev) => ({
+        ...prev,
+        [`${selectedRepo.owner.login}/${selectedRepo.name}`]: false,
+      }));
     }
   };
 
@@ -163,7 +248,7 @@ const Dashboard = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                [...Array(5)].map((_, i) => (
+                [...Array(8)].map((_, i) => (
                   <TableRow key={i} className="border-gray-800">
                     <TableCell>
                       <Skeleton className="h-5 w-3/4 rounded-md bg-gray-800" />
@@ -214,34 +299,32 @@ const Dashboard = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <RepoStatus
-                        status={
-                          repo.deployYmlInjected
-                            ? "ready-to-deploy"
-                            : "not-deployed"
-                        }
-                      />
+                      <RepoStatus status={repo.deployStatus} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {repo.deployYmlInjected ? (
+                      {repo.deployStatus === "deployed" ? (
                         <Button
                           size="sm"
-                          className="bg-green-500 hover:bg-green-600 text-white"
+                          className="bg-green-700 text-white"
+                          disabled
                         >
                           <Rocket className="mr-2 h-4 w-4" />
-                          Deploy
+                          Deployed
+                        </Button>
+                      ) : repo.deployStatus === "deploying" ? (
+                        <Button
+                          size="sm"
+                          className="bg-yellow-500 text-white"
+                          disabled
+                        >
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Deploying...
                         </Button>
                       ) : (
                         <Button
                           size="sm"
                           className="bg-blue-500 hover:bg-blue-600 text-white"
-                          onClick={() =>
-                            handleSetupWorkflow(
-                              repo.id,
-                              repo.owner.login,
-                              repo.name
-                            )
-                          }
+                          onClick={() => openEnvModal(repo)}
                           disabled={
                             settingUp[`${repo.owner.login}/${repo.name}`]
                           }
@@ -264,6 +347,49 @@ const Dashboard = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {envModalOpen && <div className="fixed inset-0 bg-black/60 z-40" />}
+      <Dialog open={envModalOpen} onOpenChange={setEnvModalOpen}>
+        <DialogContent className="z-50">
+          <DialogHeader>
+            <DialogTitle>Set Environment Variables</DialogTitle>
+          </DialogHeader>
+          {envVars.map((env, idx) => (
+            <div key={idx} className="flex gap-2 mb-2">
+              <Input
+                placeholder="Key"
+                value={env.key}
+                onChange={(e) => handleEnvVarChange(idx, "key", e.target.value)}
+              />
+              <Input
+                placeholder="Value"
+                value={env.value}
+                onChange={(e) =>
+                  handleEnvVarChange(idx, "value", e.target.value)
+                }
+              />
+              <Button variant="ghost" onClick={() => removeEnvVar(idx)}>
+                <Trash2 />
+              </Button>
+            </div>
+          ))}
+          <Button variant="outline" onClick={addEnvVar} className="mb-4">
+            <Plus className="mr-2" />
+            Add Variable
+          </Button>
+          <DialogFooter>
+            <Button
+              onClick={handleDeployWithEnv}
+              className="bg-green-600 text-white"
+            >
+              Deploy
+            </Button>
+            <Button variant="ghost" onClick={closeEnvModal}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
