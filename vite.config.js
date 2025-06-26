@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    allowedHosts: ["frontend.agrifacts.space"],
+    allowedHosts: ["frontend.agrifacts.space", "localhost"],
   },
   resolve: {
     alias: {

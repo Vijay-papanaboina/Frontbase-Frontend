@@ -1,5 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Home as HomeIcon, ChevronsLeft } from "lucide-react";
+import {
+  LayoutDashboard,
+  Home as HomeIcon,
+  ChevronsLeft,
+  Rocket,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Tooltip,
@@ -7,10 +12,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { useEffect, useState } from "react";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/", icon: HomeIcon, label: "Home" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/deployments", icon: Rocket, label: "Deployments" },
 ];
 
 const Logo = () => (

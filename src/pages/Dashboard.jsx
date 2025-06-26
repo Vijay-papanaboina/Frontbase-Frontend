@@ -37,6 +37,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import ReactIcon from "@/assets/react.svg";
 
 const RepoStatus = ({ status }) => {
   if (status === "deployed") {
@@ -63,6 +71,47 @@ const RepoStatus = ({ status }) => {
   );
 };
 
+// Framework options and their defaults
+const FRAMEWORKS = [
+  {
+    label: "React (CRA)",
+    value: "react",
+    buildCommand: "npm run build",
+    outputFolder: "build",
+  },
+  {
+    label: "Vite",
+    value: "vite",
+    buildCommand: "npm run build",
+    outputFolder: "dist",
+  },
+  {
+    label: "Vue (CLI)",
+    value: "vue",
+    buildCommand: "npm run build",
+    outputFolder: "dist",
+  },
+  {
+    label: "Angular",
+    value: "angular",
+    buildCommand: "ng build --configuration production",
+    outputFolder: "dist",
+  },
+  {
+    label: "Next.js",
+    value: "nextjs",
+    buildCommand: "npm run build && npm run export",
+    outputFolder: "out",
+  },
+  {
+    label: "Svelte",
+    value: "svelte",
+    buildCommand: "npm run build",
+    outputFolder: "public",
+  },
+  { label: "Custom", value: "custom", buildCommand: "", outputFolder: "" },
+];
+
 const Dashboard = () => {
   const { user } = useAuthStore();
   const [repos, setRepos] = useState([]);
@@ -72,6 +121,12 @@ const Dashboard = () => {
   const [envModalOpen, setEnvModalOpen] = useState(false);
   const [envVars, setEnvVars] = useState([{ key: "", value: "" }]);
   const [selectedRepo, setSelectedRepo] = useState(null);
+  const [framework, setFramework] = useState(FRAMEWORKS[0].value);
+  const [buildCommand, setBuildCommand] = useState(FRAMEWORKS[0].buildCommand);
+  const [outputFolder, setOutputFolder] = useState(FRAMEWORKS[0].outputFolder);
+  const [deployments, setDeployments] = useState([]);
+  const [deploymentsLoading, setDeploymentsLoading] = useState(false);
+  const [deploymentsError, setDeploymentsError] = useState(null);
 
   const fetchRepos = async () => {
     setLoading(true);
@@ -98,6 +153,31 @@ const Dashboard = () => {
   useEffect(() => {
     fetchRepos();
   }, []);
+
+  useEffect(() => {
+    const fetchDeployments = async () => {
+      if (!repos.length) return;
+      setDeploymentsLoading(true);
+      setDeploymentsError(null);
+      try {
+        const repo = repos[0];
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/github/repos/${
+            repo.id
+          }/deployments`,
+          { credentials: "include" }
+        );
+        if (!response.ok) throw new Error("Failed to fetch deployments");
+        const data = await response.json();
+        setDeployments(Array.isArray(data) ? data : data ? [data] : []);
+      } catch (err) {
+        setDeploymentsError(err.message);
+      } finally {
+        setDeploymentsLoading(false);
+      }
+    };
+    fetchDeployments();
+  }, [repos]);
 
   const handleSetupWorkflow = async (repoId, owner, repoName) => {
     setSettingUp((prev) => ({ ...prev, [`${owner}/${repoName}`]: true }));
@@ -130,6 +210,9 @@ const Dashboard = () => {
   const openEnvModal = (repo) => {
     setSelectedRepo(repo);
     setEnvVars([{ key: "", value: "" }]);
+    setFramework(FRAMEWORKS[0].value);
+    setBuildCommand(FRAMEWORKS[0].buildCommand);
+    setOutputFolder(FRAMEWORKS[0].outputFolder);
     setEnvModalOpen(true);
   };
 
@@ -152,6 +235,13 @@ const Dashboard = () => {
     setEnvVars((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const handleFrameworkChange = (value) => {
+    setFramework(value);
+    const fw = FRAMEWORKS.find((f) => f.value === value);
+    setBuildCommand(fw?.buildCommand || "");
+    setOutputFolder(fw?.outputFolder || "");
+  };
+
   const handleDeployWithEnv = async () => {
     if (!selectedRepo) return;
     setSettingUp((prev) => ({
@@ -172,6 +262,9 @@ const Dashboard = () => {
             repoName: selectedRepo.name,
             ownerLogin: selectedRepo.owner.login,
             envVars: env,
+            framework,
+            buildCommand,
+            outputFolder,
           }),
         }
       );
@@ -348,12 +441,74 @@ const Dashboard = () => {
         </CardContent>
       </Card>
 
-      {envModalOpen && <div className="fixed inset-0 bg-black/60 z-40" />}
       <Dialog open={envModalOpen} onOpenChange={setEnvModalOpen}>
-        <DialogContent className="z-50">
+        <DialogContent
+          className="z-50 max-w-2xl p-8"
+          style={{ backgroundColor: "rgb(222, 214, 214)" }}
+        >
           <DialogHeader>
-            <DialogTitle>Set Environment Variables</DialogTitle>
+            <DialogTitle>
+              Set Environment Variables & Build Settings
+            </DialogTitle>
           </DialogHeader>
+          <div className="mb-4">
+            <label className="block mb-1 text-sm font-medium">Framework</label>
+            <Select value={framework} onValueChange={handleFrameworkChange}>
+              <SelectTrigger className="w-full cursor-pointer">
+                <SelectValue placeholder="Select framework" />
+              </SelectTrigger>
+              <SelectContent style={{ backgroundColor: "rgb(222, 214, 214)" }}>
+                {FRAMEWORKS.map((fw) => (
+                  <SelectItem
+                    key={fw.value}
+                    value={fw.value}
+                    className="cursor-pointer flex items-center gap-2 hover:bg-gray-200"
+                  >
+                    {fw.value === "react" && (
+                      <img src={ReactIcon} alt="React" className="w-5 h-5" />
+                    )}
+                    {fw.value === "vite" && <span className="text-lg">⚡</span>}
+                    {fw.value === "vue" && <span className="text-lg">🟩</span>}
+                    {fw.value === "angular" && (
+                      <span className="text-lg">🅰️</span>
+                    )}
+                    {fw.value === "nextjs" && (
+                      <span className="text-lg">⏭️</span>
+                    )}
+                    {fw.value === "svelte" && (
+                      <span className="text-lg">🟠</span>
+                    )}
+                    {fw.value === "custom" && (
+                      <span className="text-lg">🔧</span>
+                    )}
+                    {fw.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="mb-4 flex gap-2">
+            <div className="flex-1">
+              <label className="block mb-1 text-sm font-medium">
+                Build Command
+              </label>
+              <Input
+                value={buildCommand}
+                onChange={(e) => setBuildCommand(e.target.value)}
+                placeholder="e.g. npm run build"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block mb-1 text-sm font-medium">
+                Output Folder
+              </label>
+              <Input
+                value={outputFolder}
+                onChange={(e) => setOutputFolder(e.target.value)}
+                placeholder="e.g. dist"
+              />
+            </div>
+          </div>
           {envVars.map((env, idx) => (
             <div key={idx} className="flex gap-2 mb-2">
               <Input
@@ -368,23 +523,35 @@ const Dashboard = () => {
                   handleEnvVarChange(idx, "value", e.target.value)
                 }
               />
-              <Button variant="ghost" onClick={() => removeEnvVar(idx)}>
+              <Button
+                variant="ghost"
+                onClick={() => removeEnvVar(idx)}
+                className="hover:bg-red-500 hover:cursor-pointer text-white"
+              >
                 <Trash2 />
               </Button>
             </div>
           ))}
-          <Button variant="outline" onClick={addEnvVar} className="mb-4">
+          <Button
+            variant="outline"
+            onClick={addEnvVar}
+            className="mb-4 cursor-pointer"
+          >
             <Plus className="mr-2" />
             Add Variable
           </Button>
           <DialogFooter>
             <Button
               onClick={handleDeployWithEnv}
-              className="bg-green-600 text-white"
+              className="bg-green-600 text-white cursor-pointer"
             >
               Deploy
             </Button>
-            <Button variant="ghost" onClick={closeEnvModal}>
+            <Button
+              variant="ghost"
+              onClick={closeEnvModal}
+              className="cursor-pointer bg-red-500 text-white"
+            >
               Cancel
             </Button>
           </DialogFooter>
