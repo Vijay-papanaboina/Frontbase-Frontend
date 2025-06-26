@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Github, Loader  } from "lucide-react";
-import useAuthStore from "@/lib/store";
+import { Github, Loader } from "lucide-react";
+import useAuthStore from "@/store/auth";
 import { Navigate } from "react-router-dom";
 
 const Login = () => {
@@ -28,22 +28,22 @@ const Login = () => {
   return (
     <div className="relative flex items-center justify-center h-screen -mt-14">
       <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] -z-10"></div>
-      <div className="w-full max-w-md p-8 space-y-8 bg-gray-900/80 border border-gray-800 rounded-2xl shadow-2xl backdrop-blur-sm">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card border border-border rounded-2xl shadow-2xl backdrop-blur-sm">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             Welcome to{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-teal-400">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">
               Frontbase
             </span>
           </h1>
-          <p className="text-gray-400 mt-2">
+          <p className="text-muted-foreground mt-2">
             Sign in with GitHub to deploy your projects.
           </p>
         </div>
         <Button
           onClick={handleLogin}
           size="lg"
-          className="w-full bg-white text-gray-900 hover:bg-gray-200 transition-all duration-300 hover:scale-105 hover:cursor-pointer"
+          className="w-full bg-card text-card-foreground hover:bg-muted transition-all duration-300 hover:scale-105 hover:cursor-pointer"
         >
           <Github className="mr-2 h-5 w-5" />
           Login with GitHub

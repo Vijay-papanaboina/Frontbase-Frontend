@@ -1,5 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import useAuthStore from "@/lib/store";
+import useAuthStore from "@/store/auth";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useState } from "react";
@@ -19,7 +19,7 @@ const Layout = () => {
   };
 
   return (
-    <div className="flex h-screen w-full flex-col bg-gray-900">
+    <div className="flex h-screen w-full flex-col bg-background">
       <Header
         isAuthenticated={isAuthenticated}
         user={user}

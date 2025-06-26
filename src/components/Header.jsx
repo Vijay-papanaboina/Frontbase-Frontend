@@ -22,7 +22,7 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
   const location = useLocation();
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-4 border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm px-4 lg:h-[60px] lg:px-6">
+    <header className="flex h-14 shrink-0 items-center gap-4 border-b border-border bg-background px-4 lg:h-[60px] lg:px-6">
       <div className="flex items-center gap-4">
         <div className="md:hidden">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -30,7 +30,7 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
               <Button
                 variant="outline"
                 size="icon"
-                className="shrink-0 bg-transparent border-gray-700 hover:bg-gray-800 hover:text-white"
+                className="shrink-0 bg-transparent border-border hover:bg-background/50 hover:text-foreground"
               >
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
@@ -38,7 +38,7 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="flex flex-col bg-gray-900 border-r-gray-800"
+              className="flex flex-col bg-background border-r-border"
             >
               <nav className="grid gap-2 text-lg font-medium">
                 <div className="mb-4">
@@ -70,11 +70,11 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
               <Button
                 variant="secondary"
                 size="icon"
-                className="rounded-full bg-transparent border border-gray-700"
+                className="rounded-full bg-transparent border border-border"
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.avatarUrl} alt={user?.login} />
-                  <AvatarFallback className="bg-gray-800 text-gray-300">
+                  <AvatarFallback className="bg-muted-foreground text-muted-foreground">
                     {user?.github_handle?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -83,19 +83,19 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-gray-900 border-gray-800 text-white"
+              className="bg-background border-border text-foreground"
             >
-              <DropdownMenuLabel className="text-gray-400">
+              <DropdownMenuLabel className="text-muted-foreground">
                 {user?.github_handle}
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-gray-800" />
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
-                className="cursor-pointer hover:!bg-gray-800"
+                className="cursor-pointer hover:!bg-background/50"
                 onClick={() => navigate("/dashboard")}
               >
                 Dashboard
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-gray-800" />
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
                 className="cursor-pointer text-red-400 hover:!bg-red-500/10 hover:!text-red-400"
                 onClick={handleLogout}
@@ -106,7 +106,7 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button asChild className="bg-white text-gray-900 hover:bg-gray-200">
+            <Button asChild className="bg-background text-foreground hover:bg-background/50">
             <Link to="/login">
               <Github className="mr-2 h-5 w-5" />
               Login with GitHub

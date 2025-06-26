@@ -12,7 +12,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/", icon: HomeIcon, label: "Home" },
@@ -87,8 +86,8 @@ const Sidebar = ({ isAuthenticated, isCollapsed, onToggle }) => {
 
   return (
     <div
-      className={`hidden md:flex flex-col border-r border-gray-800 bg-gray-900/80 backdrop-blur-sm transition-all duration-300 ease-in-out ${
-        isCollapsed ? "w-[72px]" : "w-[220px] lg:w-[280px]"
+      className={`hidden md:flex flex-col border-r border-border bg-background
+        ${isCollapsed ? "w-[73px]" : "w-[210px] lg:w-[250px]"}
       }`}
     >
       <div className="flex-1 overflow-y-auto">
@@ -104,11 +103,11 @@ const Sidebar = ({ isAuthenticated, isCollapsed, onToggle }) => {
             ))}
         </nav>
       </div>
-      <div className="mt-auto border-t border-gray-800 p-4">
+      <div className="mt-auto border-t border-border p-4">
         <Button
           onClick={onToggle}
           variant="outline"
-          className="w-full justify-center bg-transparent text-gray-400 border-gray-700 hover:bg-gray-800 hover:text-white"
+          className="w-full justify-center bg-transparent text-muted-foreground border-border hover:bg-background/50 hover:text-foreground"
         >
           <ChevronsLeft
             className={`h-5 w-5 transition-transform duration-300 ${

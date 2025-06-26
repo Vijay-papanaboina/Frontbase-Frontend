@@ -42,11 +42,12 @@ const DeploymentDetails = () => {
           );
           if (depRes.ok) {
             const depData = await depRes.json();
-            const arr = Array.isArray(depData)
-              ? depData
-              : depData
-              ? [depData]
-              : [];
+            let arr = [];
+            if (Array.isArray(depData)) {
+              arr = depData;
+            } else if (depData) {
+              arr = [depData];
+            }
             found = arr.find((d) => String(d.workflowRunId || d.id) === id);
             if (found) {
               found.repo = repo;
@@ -74,12 +75,12 @@ const DeploymentDetails = () => {
       >
         <ArrowLeft className="w-4 h-4" /> Back
       </Button>
-      <Card className="bg-gray-900/80 border-gray-800 shadow-2xl backdrop-blur-sm">
-        <CardHeader className="border-b border-gray-800">
-          <CardTitle className="text-white flex items-center gap-2">
-            <Rocket className="text-green-400" /> Deployment Details
+      <Card className="bg-background border-border shadow-2xl backdrop-blur-sm">
+        <CardHeader className="border-b border-border">
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Rocket className="text-primary" /> Deployment Details
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-muted-foreground">
             Details for deployment ID: <span className="font-mono">{id}</span>
           </CardDescription>
         </CardHeader>
@@ -89,11 +90,11 @@ const DeploymentDetails = () => {
               <TableBody>
                 {[...Array(6)].map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell className="font-semibold text-white w-1/3 capitalize">
-                      <Skeleton className="h-5 w-24 rounded bg-gray-800" />
+                    <TableCell className="font-semibold text-foreground w-1/3 capitalize">
+                      <Skeleton className="h-5 w-24 rounded bg-card" />
                     </TableCell>
-                    <TableCell className="text-gray-200">
-                      <Skeleton className="h-5 w-40 rounded bg-gray-800" />
+                    <TableCell className="text-foreground">
+                      <Skeleton className="h-5 w-40 rounded bg-card" />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -108,10 +109,10 @@ const DeploymentDetails = () => {
                   .slice(0, -1)
                   .map(([key, value]) => (
                     <TableRow key={key}>
-                      <TableCell className="font-semibold text-white w-1/3 capitalize">
+                      <TableCell className="font-semibold text-foreground w-1/3 capitalize">
                         {key}
                       </TableCell>
-                      <TableCell className="text-gray-200">
+                      <TableCell className="text-foreground">
                         {typeof value === "object" && value !== null
                           ? JSON.stringify(value)
                           : String(value)}

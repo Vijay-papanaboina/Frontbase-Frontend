@@ -1,12 +1,12 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
-import Callback from "./pages/Callback";
+import Callback from "./pages/Callbacks";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import { useEffect } from "react";
-import useAuthStore from "./lib/store";
+import useAuthStore from "./store/auth";
 import DeploymentDetails from "./pages/DeploymentDetails";
 import DeploymentsPage from "./pages/DeploymentsPage";
 
