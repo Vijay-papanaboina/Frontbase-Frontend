@@ -74,7 +74,8 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.avatarUrl} alt={user?.login} />
-                  <AvatarFallback className="bg-muted-foreground text-muted-foreground">
+                  <AvatarFallback className="bg-muted text-muted-foreground">
+                    {" "}
                     {user?.github_handle?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -106,7 +107,10 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-            <Button asChild className="bg-background text-foreground hover:bg-background/50">
+          <Button
+            asChild
+            className="bg-background text-foreground hover:bg-background/50"
+          >
             <Link to="/login">
               <Github className="mr-2 h-5 w-5" />
               Login with GitHub

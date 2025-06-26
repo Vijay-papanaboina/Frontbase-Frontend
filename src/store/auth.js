@@ -11,9 +11,10 @@ const useAuthStore = create((set) => ({
         {
           method: "GET",
           credentials: "include",
+          signal: AbortSignal.timeout(10000), // 10 second timeout
         }
       );
-      if (response.status === 200) {
+      if (response.ok) {
         const data = await response.json();
         set({
           isAuthenticated: true,
@@ -29,6 +30,7 @@ const useAuthStore = create((set) => ({
     }
   },
   logout: async () => {
+    set({ loading: true });
     try {
       await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, {
         method: "POST",
@@ -36,7 +38,7 @@ const useAuthStore = create((set) => ({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({}),
+        // Empty body for POST request
       });
     } catch (error) {
       console.error("Logout failed", error);

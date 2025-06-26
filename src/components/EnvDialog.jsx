@@ -70,7 +70,7 @@ const EnvDialog = ({
                 <SelectItem
                   key={fw.value}
                   value={fw.value}
-                  className="cursor-pointer flex items-center gap-2 hover:bg-gray-200"
+                  className="cursor-pointer flex items-center gap-2 hover:bg-muted"
                 >
                   {fw.value === "react" && (
                     <img src={reactIcon} alt="React" className="w-5 h-5" />
@@ -143,17 +143,17 @@ const EnvDialog = ({
         <DialogFooter>
           <Button
             onClick={handleDeployWithEnv}
-            className="bg-green-600 text-foreground cursor-pointer"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Deploy
           </Button>
           <Button
             variant="ghost"
             onClick={closeEnvModal}
-            className="cursor-pointer bg-red-500 text-foreground"
+            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
           >
             Cancel
-          </Button>
+          </Button>{" "}
         </DialogFooter>
       </DialogContent>
     </Dialog>

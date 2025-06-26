@@ -43,7 +43,7 @@ const Login = () => {
         <Button
           onClick={handleLogin}
           size="lg"
-          className="w-full bg-card text-card-foreground hover:bg-muted transition-all duration-300 hover:scale-105 hover:cursor-pointer"
+          className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all duration-300 hover:scale-105"
         >
           <Github className="mr-2 h-5 w-5" />
           Login with GitHub
