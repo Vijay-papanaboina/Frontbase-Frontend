@@ -289,7 +289,7 @@ const Dashboard = () => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center py-16">
-        <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
+        <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
         <h3 className="mt-4 text-lg font-semibold text-foreground">
           Failed to load repositories
         </h3>
@@ -309,7 +309,7 @@ const Dashboard = () => {
     <div className="relative flex flex-1 flex-col gap-8 p-4 sm:p-6 md:p-8 -m-8">
       <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] -z-10"></div>
       {envModalOpen && (
-        <div className="absolute inset-0 z-20 backdrop-blur-sm bg-black/30 pointer-events-none" />
+        <div className="absolute inset-0 z-20 backdrop-blur-sm bg-popover/30 pointer-events-none" />
       )}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -340,7 +340,9 @@ const Dashboard = () => {
                 <TableHead className="text-foreground">Name</TableHead>
                 <TableHead className="text-foreground">Visibility</TableHead>
                 <TableHead className="text-foreground">Status</TableHead>
-                <TableHead className="text-right text-foreground">Actions</TableHead>
+                <TableHead className="text-right text-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -348,16 +350,16 @@ const Dashboard = () => {
                 [...Array(8)].map((_, i) => (
                   <TableRow key={i} className="border-border h-15 text-[15px]">
                     <TableCell>
-                      <Skeleton className="h-5 w-3/4 rounded-md bg-skeleton-background" />
+                      <Skeleton className="h-6 w-100 rounded-md bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-6 w-16 rounded-full bg-skeleton-background" />
+                      <Skeleton className="h-6 w-16 rounded-full bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-6 w-32 rounded-full bg-skeleton-background" />
+                      <Skeleton className="h-6 w-32 rounded-full bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-8 w-32 ml-auto rounded-md bg-skeleton-background" />
+                      <Skeleton className="h-8 w-32 ml-auto rounded-md bg-muted-foreground/30" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -420,7 +422,7 @@ const Dashboard = () => {
                       ) : (
                         <Button
                           size="sm"
-                          className="bg-blue-500 hover:bg-blue-600 text-foreground"
+                          className="bg-primary hover:bg-primary/80 text-primary-foreground"
                           onClick={() => openEnvModal(repo)}
                           disabled={
                             settingUp[`${repo.owner.login}/${repo.name}`]

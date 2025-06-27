@@ -47,8 +47,8 @@ const NavLink = ({ href, icon, label, isActive, isCollapsed, onClick }) => {
       onClick={onClick}
       className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200 ${
         isActive
-          ? "bg-blue-500/10 text-blue-400"
-          : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
+          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+          : "text-muted-foreground hover:bg-sidebar hover:text-sidebar-foreground"
       } ${isCollapsed ? "justify-center" : ""}`}
     >
       <Icon className="h-5 w-5" />
@@ -69,7 +69,7 @@ const NavLink = ({ href, icon, label, isActive, isCollapsed, onClick }) => {
           <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
           <TooltipContent
             side="right"
-            className="bg-gray-800 border-gray-700 text-white"
+            className="bg-sidebar border-border text-sidebar-foreground"
           >
             {label}
           </TooltipContent>

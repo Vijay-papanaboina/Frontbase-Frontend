@@ -126,7 +126,7 @@ const EnvDialog = ({
             <Button
               variant="ghost"
               onClick={() => removeEnvVar(idx)}
-              className="hover:bg-red-500 hover:cursor-pointer text-foreground"
+              className="hover:bg-destructive hover:cursor-pointer text-foreground"
             >
               <Trash2 />
             </Button>
@@ -135,7 +135,8 @@ const EnvDialog = ({
         <Button
           variant="outline"
           onClick={addEnvVar}
-          className="mb-4 cursor-pointer"
+          className="mb-4 cursor-pointer hover:bg-primary/80"
+          
         >
           <Plus className="mr-2" />
           Add Variable
@@ -143,14 +144,14 @@ const EnvDialog = ({
         <DialogFooter>
           <Button
             onClick={handleDeployWithEnv}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/80 hover:cursor-pointer"
           >
             Deploy
           </Button>
           <Button
             variant="ghost"
             onClick={closeEnvModal}
-            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            className="text-destructive hover:bg-destructive hover:text-destructive hover:cursor-pointer"
           >
             Cancel
           </Button>{" "}

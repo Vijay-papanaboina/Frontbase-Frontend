@@ -98,7 +98,7 @@ const Header = ({ isAuthenticated, user, handleLogout }) => {
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
-                className="cursor-pointer text-red-400 hover:!bg-red-500/10 hover:!text-red-400"
+                className="cursor-pointer text-destructive hover:!bg-destructive/10 hover:!text-destructive"
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />

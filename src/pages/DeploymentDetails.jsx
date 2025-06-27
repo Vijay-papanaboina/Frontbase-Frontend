@@ -91,10 +91,10 @@ const DeploymentDetails = () => {
                 {[...Array(6)].map((_, i) => (
                   <TableRow key={i}>
                     <TableCell className="font-semibold text-foreground w-1/3 capitalize">
-                      <Skeleton className="h-5 w-24 rounded bg-card" />
+                      <Skeleton className="h-5 w-24 rounded bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell className="text-foreground">
-                      <Skeleton className="h-5 w-40 rounded bg-card" />
+                      <Skeleton className="h-5 w-40 rounded bg-muted-foreground/30" />
                     </TableCell>
                   </TableRow>
                 ))}

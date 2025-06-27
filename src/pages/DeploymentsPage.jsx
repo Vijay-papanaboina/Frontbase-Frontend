@@ -112,25 +112,25 @@ const DeploymentsPage = () => {
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i} className="border-border h-15 text-[15px]">
                     <TableCell>
-                      <Skeleton className="h-5 w-24 rounded-full bg-skeleton-background" />
+                      <Skeleton className="h-5 w-24 rounded-full bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-5 w-16 rounded-md bg-skeleton-background" />
+                      <Skeleton className="h-5 w-16 rounded-md bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-5 w-16 rounded-md bg-skeleton-background" />
+                      <Skeleton className="h-5 w-16 rounded-md bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-5 w-16 rounded-md bg-skeleton-background" />
+                      <Skeleton className="h-5 w-16 rounded-md bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-5 w-24 rounded-md bg-skeleton-background" />
+                      <Skeleton className="h-5 w-24 rounded-md bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-5 w-24 rounded-full bg-skeleton-background" />
+                      <Skeleton className="h-5 w-24 rounded-full bg-muted-foreground/30" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-5 w-12 rounded-full bg-skeleton-background" />
+                      <Skeleton className="h-5 w-12 rounded-full bg-muted-foreground/30" />
                     </TableCell>
                   </TableRow>
                 ))
