@@ -25,25 +25,8 @@ import {
   GitBranchPlus,
   Rocket,
   Wand2,
-  Plus,
-  Trash2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
 import ReactIcon from "@/assets/react.svg";
 import EnvDialog from "@/components/EnvDialog";
 
@@ -309,8 +292,8 @@ const Dashboard = () => {
     <div className="relative flex flex-1 flex-col gap-8 p-4 sm:p-6 md:p-8 -m-8">
       <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] -z-10"></div>
       {envModalOpen && (
-        <div className="absolute inset-0 z-20 backdrop-blur-sm bg-popover/30 pointer-events-none" />
-      )}
+        <div className="absolute inset-0 z-20 backdrop-blur-sm bg-popover/30" />
+      )}{" "}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Welcome back,{" "}
@@ -322,7 +305,6 @@ const Dashboard = () => {
           Manage your projects and deployments from this dashboard.
         </p>
       </div>
-
       <Card className="bg-background border-border shadow-2xl">
         <CardHeader className="border-b border-border">
           <CardTitle className="text-foreground flex items-center">
@@ -446,7 +428,6 @@ const Dashboard = () => {
           </Table>
         </CardContent>
       </Card>
-
       <EnvDialog
         open={envModalOpen}
         onOpenChange={setEnvModalOpen}

@@ -136,7 +136,6 @@ const EnvDialog = ({
           variant="outline"
           onClick={addEnvVar}
           className="mb-4 cursor-pointer hover:bg-primary/80"
-          
         >
           <Plus className="mr-2" />
           Add Variable
@@ -151,8 +150,9 @@ const EnvDialog = ({
           <Button
             variant="ghost"
             onClick={closeEnvModal}
-            className="text-destructive hover:bg-destructive hover:text-destructive hover:cursor-pointer"
+            className="text-destructive hover:bg-destructive hover:text-destructive-foreground hover:cursor-pointer"
           >
+            {" "}
             Cancel
           </Button>{" "}
         </DialogFooter>
