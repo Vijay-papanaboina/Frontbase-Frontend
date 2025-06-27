@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import useAuthStore from "./store/auth";
 import DeploymentDetails from "./pages/DeploymentDetails";
 import DeploymentsPage from "./pages/DeploymentsPage";
+import Callback from "./pages/callback";
 
 function App() {
   const { checkAuth } = useAuthStore();
