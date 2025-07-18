@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import useAuthStore from "@/store/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -111,6 +112,7 @@ const Dashboard = () => {
   const [deployments, setDeployments] = useState([]);
   const [deploymentsLoading, setDeploymentsLoading] = useState(false);
   const [deploymentsError, setDeploymentsError] = useState(null);
+  const navigate = useNavigate();
 
   const fetchRepos = async () => {
     setLoading(true);
@@ -270,7 +272,7 @@ const Dashboard = () => {
             const data = await res.json();
             if (data && data.status === "completed") {
               if (data.conclusion === "success") {
-                onSuccess();
+                onSuccess(data);
                 return;
               } else {
                 onFailure(data.conclusion);
@@ -284,9 +286,11 @@ const Dashboard = () => {
       };
       await pollDeploymentStatus(
         selectedRepo.id,
-        async () => {
+        async (deployment) => {
           await fetchRepos();
           closeEnvModal();
+          // Redirect to deployment details page
+          navigate(`/deployments/${deployment.workflowRunId || deployment.id}`);
         },
         (conclusion) => {
           alert(`Deployment failed: ${conclusion}`);
