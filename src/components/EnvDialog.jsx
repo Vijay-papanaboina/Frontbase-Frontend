@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, RefreshCw } from "lucide-react";
 
 const EnvDialog = ({
   open,
@@ -31,6 +31,7 @@ const EnvDialog = ({
   setEnvVars,
   handleDeployWithEnv,
   closeEnvModal,
+  loading,
 }) => {
   const handleFrameworkChange = (value) => {
     setFramework(value);
@@ -144,13 +145,18 @@ const EnvDialog = ({
           <Button
             onClick={handleDeployWithEnv}
             className="bg-primary text-primary-foreground hover:bg-primary/80 hover:cursor-pointer"
+            disabled={loading}
           >
+            {loading ? (
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
             Deploy
           </Button>
           <Button
             variant="ghost"
             onClick={closeEnvModal}
             className="text-destructive hover:bg-destructive hover:text-destructive-foreground hover:cursor-pointer"
+            disabled={loading}
           >
             {" "}
             Cancel

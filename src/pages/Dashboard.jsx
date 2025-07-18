@@ -256,8 +256,42 @@ const Dashboard = () => {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to setup workflow");
       }
-      await fetchRepos();
-      closeEnvModal();
+      // Start polling for deployment status
+      const pollDeploymentStatus = async (repoId, onSuccess, onFailure) => {
+        for (let i = 0; i < 40; i++) {
+          // poll up to 200 seconds
+          const res = await fetch(
+            `${
+              import.meta.env.VITE_BACKEND_URL
+            }/api/github/repos/${repoId}/deployment-status`,
+            { credentials: "include" }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.status === "completed") {
+              if (data.conclusion === "success") {
+                onSuccess();
+                return;
+              } else {
+                onFailure(data.conclusion);
+                return;
+              }
+            }
+          }
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+        onFailure("timeout");
+      };
+      await pollDeploymentStatus(
+        selectedRepo.id,
+        async () => {
+          await fetchRepos();
+          closeEnvModal();
+        },
+        (conclusion) => {
+          alert(`Deployment failed: ${conclusion}`);
+        }
+      );
     } catch (err) {
       console.error(err);
       alert(`Failed to setup workflow: ${err.message}`);
@@ -443,6 +477,13 @@ const Dashboard = () => {
         setEnvVars={setEnvVars}
         handleDeployWithEnv={handleDeployWithEnv}
         closeEnvModal={closeEnvModal}
+        loading={
+          settingUp[
+            selectedRepo
+              ? `${selectedRepo.owner.login}/${selectedRepo.name}`
+              : ""
+          ]
+        }
       />
     </div>
   );
