@@ -85,43 +85,77 @@ const DeploymentDetails = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <Table>
-              <TableBody>
-                {[...Array(6)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-semibold text-foreground w-1/3 capitalize">
-                      <Skeleton className="h-5 w-24 rounded bg-muted-foreground/30" />
-                    </TableCell>
-                    <TableCell className="text-foreground">
-                      <Skeleton className="h-5 w-40 rounded bg-muted-foreground/30" />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : error ? (
-            <div className="text-red-400">{error}</div>
-          ) : deployment ? (
-            <Table>
-              <TableBody>
+          {/* Mobile: Stacked card layout */}
+          <div className="block sm:hidden">
+            {loading ? (
+              [...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="mb-4 p-4 rounded-lg border bg-background shadow"
+                >
+                  <Skeleton className="h-5 w-24 mb-2 rounded bg-muted-foreground/30" />
+                  <Skeleton className="h-5 w-40 mb-2 rounded bg-muted-foreground/30" />
+                </div>
+              ))
+            ) : error ? (
+              <div className="text-red-400">{error}</div>
+            ) : deployment ? (
+              <div className="mb-4 p-4 rounded-lg border bg-background shadow">
                 {Object.entries(deployment)
                   .slice(0, -1)
                   .map(([key, value]) => (
-                    <TableRow key={key}>
-                      <TableCell className="font-semibold text-foreground w-1/3 capitalize">
-                        {key}
-                      </TableCell>
-                      <TableCell className="text-foreground">
+                    <div key={key} className="mb-2">
+                      <span className="font-semibold capitalize">{key}:</span>{" "}
+                      <span className="text-foreground">
                         {typeof value === "object" && value !== null
                           ? JSON.stringify(value)
                           : String(value)}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            ) : null}
+          </div>
+          {/* Desktop/tablet: Table layout */}
+          <div className="hidden sm:block">
+            {loading ? (
+              <Table>
+                <TableBody>
+                  {[...Array(6)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-semibold text-foreground w-1/3 capitalize">
+                        <Skeleton className="h-5 w-24 rounded bg-muted-foreground/30" />
+                      </TableCell>
+                      <TableCell className="text-foreground">
+                        <Skeleton className="h-5 w-40 rounded bg-muted-foreground/30" />
                       </TableCell>
                     </TableRow>
                   ))}
-              </TableBody>
-            </Table>
-          ) : null}
+                </TableBody>
+              </Table>
+            ) : error ? (
+              <div className="text-red-400">{error}</div>
+            ) : deployment ? (
+              <Table>
+                <TableBody>
+                  {Object.entries(deployment)
+                    .slice(0, -1)
+                    .map(([key, value]) => (
+                      <TableRow key={key}>
+                        <TableCell className="font-semibold text-foreground w-1/3 capitalize">
+                          {key}
+                        </TableCell>
+                        <TableCell className="text-foreground">
+                          {typeof value === "object" && value !== null
+                            ? JSON.stringify(value)
+                            : String(value)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
     </div>
