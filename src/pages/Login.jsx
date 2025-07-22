@@ -1,18 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Github, Loader } from "lucide-react";
 import useAuthStore from "@/store/auth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 const Login = () => {
   const { isAuthenticated, loading } = useAuthStore();
+  const location = useLocation();
 
-  const handleLogin = () => {
-    console.log("[FRONTEND] Login button clicked");
-    window.location.href = `${
-      import.meta.env.VITE_BACKEND_URL
-    }/api/auth/github`;
-  };
+  // If user is already authenticated, redirect to dashboard or previous attempted route
+  if (isAuthenticated) {
+    const from = location.state?.from?.pathname || "/dashboard";
+    return <Navigate to={from} replace />;
+  }
 
+  // Show loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -21,9 +22,11 @@ const Login = () => {
     );
   }
 
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" />;
-  }
+  const handleLogin = () => {
+    window.location.href = `${
+      import.meta.env.VITE_BACKEND_URL
+    }/api/auth/github`;
+  };
 
   return (
     <div className="relative flex items-center justify-center h-screen -mt-14">

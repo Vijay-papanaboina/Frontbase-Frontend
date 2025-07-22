@@ -11,6 +11,49 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Rocket, ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import ReactIcon from "@/assets/react.svg";
+import EnvDialog from "@/components/EnvDialog";
+import RedeployDialog from "@/components/RedeployDialog";
+
+const FRAMEWORKS = [
+  {
+    label: "React (CRA)",
+    value: "react",
+    buildCommand: "npm run build",
+    outputFolder: "build",
+  },
+  {
+    label: "Vite",
+    value: "vite",
+    buildCommand: "npm run build",
+    outputFolder: "dist",
+  },
+  {
+    label: "Vue (CLI)",
+    value: "vue",
+    buildCommand: "npm run build",
+    outputFolder: "dist",
+  },
+  {
+    label: "Angular",
+    value: "angular",
+    buildCommand: "ng build --configuration production",
+    outputFolder: "dist",
+  },
+  {
+    label: "Next.js",
+    value: "nextjs",
+    buildCommand: "npm run build && npm run export",
+    outputFolder: "out",
+  },
+  {
+    label: "Svelte",
+    value: "svelte",
+    buildCommand: "npm run build",
+    outputFolder: "public",
+  },
+  { label: "Custom", value: "custom", buildCommand: "", outputFolder: "" },
+];
 
 const DeploymentDetails = () => {
   const { id } = useParams();
@@ -18,6 +61,22 @@ const DeploymentDetails = () => {
   const [deployment, setDeployment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [envModalOpen, setEnvModalOpen] = useState(false);
+  const [envVars, setEnvVars] = useState([{ key: "", value: "" }]);
+  const [framework, setFramework] = useState(FRAMEWORKS[0].value);
+  const [buildCommand, setBuildCommand] = useState(FRAMEWORKS[0].buildCommand);
+  const [outputFolder, setOutputFolder] = useState(FRAMEWORKS[0].outputFolder);
+  const [envLoading, setEnvLoading] = useState(false);
+  const [redeployDialogOpen, setRedeployDialogOpen] = useState(false);
+  const [redeployFramework, setRedeployFramework] = useState(
+    FRAMEWORKS[0].value
+  );
+  const [redeployBuildCommand, setRedeployBuildCommand] = useState(
+    FRAMEWORKS[0].buildCommand
+  );
+  const [redeployOutputFolder, setRedeployOutputFolder] = useState(
+    FRAMEWORKS[0].outputFolder
+  );
 
   useEffect(() => {
     const fetchDeployment = async () => {
@@ -26,18 +85,18 @@ const DeploymentDetails = () => {
       try {
         // Try all repos to find the deployment by id
         const reposRes = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/github/repos`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/github/repositories`,
           { credentials: "include" }
         );
         if (!reposRes.ok) throw new Error("Failed to fetch repos");
         const reposData = await reposRes.json();
-        const repos = reposData.repos || [];
+        const repos = reposData.repositories || [];
         let found = null;
         for (const repo of repos) {
           const depRes = await fetch(
-            `${import.meta.env.VITE_BACKEND_URL}/api/github/repos/${
+            `${import.meta.env.VITE_BACKEND_URL}/api/github/deployments/${
               repo.id
-            }/deployments`,
+            }`,
             { credentials: "include" }
           );
           if (depRes.ok) {
@@ -66,6 +125,69 @@ const DeploymentDetails = () => {
     fetchDeployment();
   }, [id]);
 
+  const handleRedeploy = async (fw, buildCmd, outFolder, commitSha) => {
+    if (!deployment?.repo?.id) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/github/workflows/${
+          deployment.repo.id
+        }/redeploy`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            framework: fw,
+            buildCommand: buildCmd,
+            outputFolder: outFolder,
+            commitSha,
+          }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to trigger redeploy");
+      alert("Redeployment triggered!");
+      // Refresh deployment status
+      // await fetchDeployment();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+      setRedeployDialogOpen(false);
+    }
+  };
+
+  const openEnvModal = async () => {
+    if (!deployment?.repo) return;
+    setEnvLoading(true);
+    setEnvModalOpen(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/environment/variables/${
+          deployment.repo.id
+        }`,
+        {
+          credentials: "include",
+        }
+      );
+      let envs = {};
+      if (res.ok) {
+        envs = await res.json();
+      }
+      setEnvVars(
+        Object.entries(envs).map(([key, value]) => ({ key, value })) || [
+          { key: "", value: "" },
+        ]
+      );
+    } catch (err) {
+      setEnvVars([{ key: "", value: "" }]);
+    } finally {
+      setEnvLoading(false);
+    }
+  };
+
+  const closeEnvModal = () => setEnvModalOpen(false);
+
   return (
     <div className="max-w-2xl mx-auto mt-8">
       <Button
@@ -83,6 +205,25 @@ const DeploymentDetails = () => {
           <CardDescription className="text-muted-foreground">
             Details for deployment ID: <span className="font-mono">{id}</span>
           </CardDescription>
+          {/* Action buttons */}
+          {deployment && (
+            <div className="flex gap-2 mt-4">
+              <Button
+                onClick={() => setRedeployDialogOpen(true)}
+                disabled={loading}
+                className="bg-primary text-primary-foreground"
+              >
+                Redeploy
+              </Button>
+              <Button
+                onClick={openEnvModal}
+                disabled={envLoading}
+                className="bg-secondary text-secondary-foreground"
+              >
+                Envs
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {/* Mobile: Stacked card layout */}
@@ -158,6 +299,36 @@ const DeploymentDetails = () => {
           </div>
         </CardContent>
       </Card>
+      <EnvDialog
+        open={envModalOpen}
+        onOpenChange={setEnvModalOpen}
+        envVars={envVars}
+        setEnvVars={setEnvVars}
+        closeEnvModal={closeEnvModal}
+        loading={envLoading}
+        repoId={deployment?.repo?.id}
+      />
+      <RedeployDialog
+        open={redeployDialogOpen}
+        onOpenChange={setRedeployDialogOpen}
+        frameworks={FRAMEWORKS}
+        framework={redeployFramework}
+        setFramework={setRedeployFramework}
+        buildCommand={redeployBuildCommand}
+        setBuildCommand={setRedeployBuildCommand}
+        outputFolder={redeployOutputFolder}
+        setOutputFolder={setRedeployOutputFolder}
+        repoId={deployment?.repo?.id}
+        onRedeploy={(commitSha) =>
+          handleRedeploy(
+            redeployFramework,
+            redeployBuildCommand,
+            redeployOutputFolder,
+            commitSha
+          )
+        }
+        loading={loading}
+      />
     </div>
   );
 };

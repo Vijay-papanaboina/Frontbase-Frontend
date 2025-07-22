@@ -2,7 +2,11 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import useAuthStore from "@/store/auth";
 import { Loader } from "lucide-react";
 
-const ProtectedRoute = () => {
+/**
+ * PublicRoute component prevents authenticated users from accessing public routes
+ * like login, register, etc. If authenticated, redirects to dashboard.
+ */
+const PublicRoute = () => {
   const { isAuthenticated, loading } = useAuthStore();
   const location = useLocation();
 
@@ -15,13 +19,14 @@ const ProtectedRoute = () => {
     );
   }
 
-  // If not authenticated, redirect to login with the current location
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // If user is authenticated, redirect to dashboard or previous location
+  if (isAuthenticated) {
+    const from = location.state?.from?.pathname || "/dashboard";
+    return <Navigate to={from} replace />;
   }
 
-  // If authenticated, render the protected route
+  // If not authenticated, render the public route
   return <Outlet />;
 };
 
-export default ProtectedRoute;
+export default PublicRoute;

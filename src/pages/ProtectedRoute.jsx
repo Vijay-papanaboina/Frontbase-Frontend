@@ -1,10 +1,11 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import useAuthStore from "../store/auth";
 import { Loader } from "lucide-react";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuthStore();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -15,10 +16,12 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    // Redirect to login but save the attempted location
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return children;
+  // Render child routes
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

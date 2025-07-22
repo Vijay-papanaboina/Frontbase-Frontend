@@ -19,19 +19,30 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
+        {/* Public Routes */}
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
         <Route path="callback" element={<Callback />} />
+
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="deployments" element={<DeploymentsPage />} />
+          <Route path="deployments/:id" element={<DeploymentDetails />} />
+        </Route>
+
+        {/* 404 Route */}
         <Route
-          path="dashboard"
+          path="*"
           element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
+            <div className="flex flex-col items-center justify-center min-h-screen">
+              <h1 className="text-4xl font-bold mb-4">404 - Not Found</h1>
+              <p className="text-lg text-gray-600">
+                The page you're looking for doesn't exist.
+              </p>
+            </div>
           }
         />
-        <Route path="/deployments/:id" element={<DeploymentDetails />} />
-        <Route path="/deployments" element={<DeploymentsPage />} />
       </Route>
     </Routes>
   );

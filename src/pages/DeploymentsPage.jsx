@@ -30,19 +30,19 @@ const DeploymentsPage = () => {
       try {
         // Fetch all repos first
         const reposRes = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/github/repos`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/github/repositories`,
           { credentials: "include" }
         );
         if (!reposRes.ok) throw new Error("Failed to fetch repos");
         const reposData = await reposRes.json();
-        const repos = reposData.repos || [];
+        const repos = reposData.repositories || [];
         // Fetch deployments for each repo in parallel
         const deploymentPromises = repos.map(async (repo) => {
           try {
             const depRes = await fetch(
-              `${import.meta.env.VITE_BACKEND_URL}/api/github/repos/${
+              `${import.meta.env.VITE_BACKEND_URL}/api/github/deployments/${
                 repo.id
-              }/deployments`,
+              }`,
               { credentials: "include" }
             );
             if (depRes.ok) {

@@ -119,7 +119,7 @@ const Dashboard = () => {
     setError(null);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/github/repos`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/github/repositories`,
         {
           credentials: "include",
         }
@@ -128,7 +128,7 @@ const Dashboard = () => {
         throw new Error("Failed to fetch repositories");
       }
       const data = await response.json();
-      setRepos(data.repos);
+      setRepos(Array.isArray(data.repositories) ? data.repositories : []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -148,9 +148,9 @@ const Dashboard = () => {
       try {
         const repo = repos[0];
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/github/repos/${
+          `${import.meta.env.VITE_BACKEND_URL}/api/github/deployments/${
             repo.id
-          }/deployments`,
+          }/status`,
           { credentials: "include" }
         );
         if (!response.ok) throw new Error("Failed to fetch deployments");
@@ -169,7 +169,9 @@ const Dashboard = () => {
     setSettingUp((prev) => ({ ...prev, [`${owner}/${repoName}`]: true }));
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/github/repos/${repoId}/setup`,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/github/workflows/${repoId}/setup`,
         {
           method: "POST",
           credentials: "include",
@@ -177,6 +179,10 @@ const Dashboard = () => {
           body: JSON.stringify({
             repoName: repoName,
             ownerLogin: owner,
+            envVars: envVars,
+            framework: framework,
+            buildCommand: buildCommand,
+            outputFolder: outputFolder,
           }),
         }
       );
@@ -237,7 +243,7 @@ const Dashboard = () => {
     try {
       const env = envVars.filter((e) => e.key.trim() !== "");
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/github/repos/${
+        `${import.meta.env.VITE_BACKEND_URL}/api/github/workflows/${
           selectedRepo.id
         }/setup`,
         {
@@ -265,7 +271,7 @@ const Dashboard = () => {
           const res = await fetch(
             `${
               import.meta.env.VITE_BACKEND_URL
-            }/api/github/repos/${repoId}/deployment-status`,
+            }/api/github/deployments/${repoId}/status`,
             { credentials: "include" }
           );
           if (res.ok) {
@@ -565,17 +571,8 @@ const Dashboard = () => {
       <EnvDialog
         open={envModalOpen}
         onOpenChange={setEnvModalOpen}
-        frameworks={FRAMEWORKS}
-        reactIcon={ReactIcon}
-        framework={framework}
-        setFramework={setFramework}
-        buildCommand={buildCommand}
-        setBuildCommand={setBuildCommand}
-        outputFolder={outputFolder}
-        setOutputFolder={setOutputFolder}
         envVars={envVars}
         setEnvVars={setEnvVars}
-        handleDeployWithEnv={handleDeployWithEnv}
         closeEnvModal={closeEnvModal}
         loading={
           settingUp[
@@ -584,6 +581,7 @@ const Dashboard = () => {
               : ""
           ]
         }
+        repoId={selectedRepo?.id}
       />
     </div>
   );
