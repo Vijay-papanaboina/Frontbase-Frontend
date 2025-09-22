@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Rocket, ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ReactIcon from "@/assets/react.svg";
-import EnvDialog from "@/components/EnvDialog";
+import EnvVarsDialog from "@/components/EnvVarsDialog";
 import RedeployDialog from "@/components/RedeployDialog";
 
 const FRAMEWORKS = [
@@ -62,11 +62,6 @@ const DeploymentDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [envModalOpen, setEnvModalOpen] = useState(false);
-  const [envVars, setEnvVars] = useState([{ key: "", value: "" }]);
-  const [framework, setFramework] = useState(FRAMEWORKS[0].value);
-  const [buildCommand, setBuildCommand] = useState(FRAMEWORKS[0].buildCommand);
-  const [outputFolder, setOutputFolder] = useState(FRAMEWORKS[0].outputFolder);
-  const [envLoading, setEnvLoading] = useState(false);
   const [redeployDialogOpen, setRedeployDialogOpen] = useState(false);
   const [redeployFramework, setRedeployFramework] = useState(
     FRAMEWORKS[0].value
@@ -83,38 +78,20 @@ const DeploymentDetails = () => {
       setLoading(true);
       setError(null);
       try {
-        // Try all repos to find the deployment by id
-        const reposRes = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/github/repositories`,
+        // Fetch all deployments in a single API call
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/github/deployments`,
           { credentials: "include" }
         );
-        if (!reposRes.ok) throw new Error("Failed to fetch repos");
-        const reposData = await reposRes.json();
-        const repos = reposData.repositories || [];
-        let found = null;
-        for (const repo of repos) {
-          const depRes = await fetch(
-            `${import.meta.env.VITE_BACKEND_URL}/api/github/deployments/${
-              repo.id
-            }`,
-            { credentials: "include" }
-          );
-          if (depRes.ok) {
-            const depData = await depRes.json();
-            let arr = [];
-            if (Array.isArray(depData)) {
-              arr = depData;
-            } else if (depData) {
-              arr = [depData];
-            }
-            found = arr.find((d) => String(d.workflowRunId || d.id) === id);
-            if (found) {
-              found.repo = repo;
-              break;
-            }
-          }
-        }
+        if (!response.ok) throw new Error("Failed to fetch deployments");
+        const deployments = await response.json();
+
+        // Find the specific deployment by ID
+        const found = deployments.find(
+          (d) => String(d.workflowRunId || d.id) === id
+        );
         if (!found) throw new Error("Deployment not found");
+
         setDeployment(found);
       } catch (err) {
         setError(err.message);
@@ -126,12 +103,12 @@ const DeploymentDetails = () => {
   }, [id]);
 
   const handleRedeploy = async (fw, buildCmd, outFolder, commitSha) => {
-    if (!deployment?.repo?.id) return;
+    if (!deployment?.repository?.id) return;
     setLoading(true);
     try {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/github/workflows/${
-          deployment.repo.id
+          deployment.repository.id
         }/redeploy`,
         {
           method: "POST",
@@ -157,36 +134,10 @@ const DeploymentDetails = () => {
     }
   };
 
-  const openEnvModal = async () => {
-    if (!deployment?.repo) return;
-    setEnvLoading(true);
+  const openEnvModal = () => {
+    if (!deployment?.repository) return;
     setEnvModalOpen(true);
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/environment/variables/${
-          deployment.repo.id
-        }`,
-        {
-          credentials: "include",
-        }
-      );
-      let envs = {};
-      if (res.ok) {
-        envs = await res.json();
-      }
-      setEnvVars(
-        Object.entries(envs).map(([key, value]) => ({ key, value })) || [
-          { key: "", value: "" },
-        ]
-      );
-    } catch (err) {
-      setEnvVars([{ key: "", value: "" }]);
-    } finally {
-      setEnvLoading(false);
-    }
   };
-
-  const closeEnvModal = () => setEnvModalOpen(false);
 
   return (
     <div className="max-w-2xl mx-auto mt-8">
@@ -217,10 +168,9 @@ const DeploymentDetails = () => {
               </Button>
               <Button
                 onClick={openEnvModal}
-                disabled={envLoading}
                 className="bg-secondary text-secondary-foreground"
               >
-                Envs
+                Environment Variables
               </Button>
             </div>
           )}
@@ -299,14 +249,10 @@ const DeploymentDetails = () => {
           </div>
         </CardContent>
       </Card>
-      <EnvDialog
+      <EnvVarsDialog
         open={envModalOpen}
         onOpenChange={setEnvModalOpen}
-        envVars={envVars}
-        setEnvVars={setEnvVars}
-        closeEnvModal={closeEnvModal}
-        loading={envLoading}
-        repoId={deployment?.repo?.id}
+        repoId={deployment?.repository?.id}
       />
       <RedeployDialog
         open={redeployDialogOpen}
@@ -318,7 +264,7 @@ const DeploymentDetails = () => {
         setBuildCommand={setRedeployBuildCommand}
         outputFolder={redeployOutputFolder}
         setOutputFolder={setRedeployOutputFolder}
-        repoId={deployment?.repo?.id}
+        repoId={deployment?.repository?.id}
         onRedeploy={(commitSha) =>
           handleRedeploy(
             redeployFramework,

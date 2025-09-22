@@ -28,49 +28,14 @@ const DeploymentsPage = () => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch all repos first
-        const reposRes = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/github/repositories`,
+        // Fetch all deployments in a single API call
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/github/deployments`,
           { credentials: "include" }
         );
-        if (!reposRes.ok) throw new Error("Failed to fetch repos");
-        const reposData = await reposRes.json();
-        const repos = reposData.repositories || [];
-        // Fetch deployments for each repo in parallel
-        const deploymentPromises = repos.map(async (repo) => {
-          try {
-            const depRes = await fetch(
-              `${import.meta.env.VITE_BACKEND_URL}/api/github/deployments/${
-                repo.id
-              }`,
-              { credentials: "include" }
-            );
-            if (depRes.ok) {
-              const depData = await depRes.json();
-              if (Array.isArray(depData)) {
-                return depData.map((d) => ({ ...d, repo }));
-              } else if (depData) {
-                return [{ ...depData, repo }];
-              }
-            }
-            return [];
-          } catch (err) {
-            console.error(
-              `Error fetching deployments for repo ${repo.id}:`,
-              err
-            );
-            return [];
-          }
-        });
-        const deploymentArrays = await Promise.all(deploymentPromises);
-        const allDeployments = deploymentArrays.flat();
-        // Sort by startedAt/started_at desc with null-safe handling
-        allDeployments.sort((a, b) => {
-          const dateA = new Date(a.startedAt || a.started_at || 0);
-          const dateB = new Date(b.startedAt || b.started_at || 0);
-          return dateB.getTime() - dateA.getTime();
-        });
-        setDeployments(allDeployments);
+        if (!response.ok) throw new Error("Failed to fetch deployments");
+        const data = await response.json();
+        setDeployments(data || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -123,7 +88,11 @@ const DeploymentsPage = () => {
                   className="mb-4 p-4 rounded-lg border bg-background shadow"
                 >
                   <div className="font-bold text-foreground mb-1">
-                    {dep.repo?.name || dep.repo?.full_name || "-"}
+                    {dep.repository?.fullName ||
+                      dep.repository?.name ||
+                      dep.repo?.name ||
+                      dep.repo?.full_name ||
+                      "-"}
                   </div>
                   <div className="mb-1">
                     <span className="font-semibold">Workflow Run ID:</span>{" "}
@@ -226,7 +195,11 @@ const DeploymentsPage = () => {
                       className="border-border mb-2 h-15 text-[15px]"
                     >
                       <TableCell className="text-foreground">
-                        {dep.repo?.name || dep.repo?.full_name || "-"}
+                        {dep.repository?.fullName ||
+                          dep.repository?.name ||
+                          dep.repo?.name ||
+                          dep.repo?.full_name ||
+                          "-"}
                       </TableCell>
                       <TableCell className="text-foreground">
                         {dep.workflowRunId || dep.id}

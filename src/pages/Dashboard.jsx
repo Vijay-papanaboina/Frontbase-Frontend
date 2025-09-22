@@ -61,40 +61,80 @@ const FRAMEWORKS = [
   {
     label: "React (CRA)",
     value: "react",
+    icon: "⚛️",
     buildCommand: "npm run build",
     outputFolder: "build",
   },
   {
     label: "Vite",
     value: "vite",
+    icon: "⚡",
     buildCommand: "npm run build",
     outputFolder: "dist",
   },
   {
-    label: "Vue (CLI)",
+    label: "Vue.js",
     value: "vue",
+    icon: "💚",
     buildCommand: "npm run build",
     outputFolder: "dist",
   },
   {
     label: "Angular",
     value: "angular",
+    icon: "🅰️",
     buildCommand: "ng build --configuration production",
     outputFolder: "dist",
   },
   {
     label: "Next.js",
     value: "nextjs",
-    buildCommand: "npm run build && npm run export",
-    outputFolder: "out",
+    icon: "▲",
+    buildCommand: "npm run build",
+    outputFolder: ".next",
   },
   {
     label: "Svelte",
     value: "svelte",
+    icon: "🧡",
     buildCommand: "npm run build",
-    outputFolder: "public",
+    outputFolder: "dist",
   },
-  { label: "Custom", value: "custom", buildCommand: "", outputFolder: "" },
+  {
+    label: "Nuxt.js",
+    value: "nuxt",
+    icon: "💚",
+    buildCommand: "npm run generate",
+    outputFolder: "dist",
+  },
+  {
+    label: "SvelteKit",
+    value: "sveltekit",
+    icon: "🧡",
+    buildCommand: "npm run build",
+    outputFolder: "build",
+  },
+  {
+    label: "Astro",
+    value: "astro",
+    icon: "🚀",
+    buildCommand: "npm run build",
+    outputFolder: "dist",
+  },
+  {
+    label: "Remix",
+    value: "remix",
+    icon: "🎸",
+    buildCommand: "npm run build",
+    outputFolder: "build",
+  },
+  {
+    label: "Custom",
+    value: "custom",
+    icon: "⚙️",
+    buildCommand: "",
+    outputFolder: "",
+  },
 ];
 
 const Dashboard = () => {
@@ -571,8 +611,17 @@ const Dashboard = () => {
       <EnvDialog
         open={envModalOpen}
         onOpenChange={setEnvModalOpen}
+        frameworks={FRAMEWORKS}
+        reactIcon={ReactIcon}
+        framework={framework}
+        setFramework={setFramework}
+        buildCommand={buildCommand}
+        setBuildCommand={setBuildCommand}
+        outputFolder={outputFolder}
+        setOutputFolder={setOutputFolder}
         envVars={envVars}
         setEnvVars={setEnvVars}
+        handleDeployWithEnv={handleDeployWithEnv}
         closeEnvModal={closeEnvModal}
         loading={
           settingUp[
