@@ -1,26 +1,22 @@
 # Frontbase Frontend
 
-React + Vite app for managing repositories, deployments, and environment variables with GitHub OAuth via the backend.
+**Frontbase** is a platform for deploying static frontend projects to the edge. Connect your GitHub, select a repository, configure your build settings, and deploy to Cloudflare's global network with a unique subdomain.
+
+**This repo** contains the React dashboard where users manage their deployments.
 
 - Backend repo: [Frontbase-Backend](https://github.com/Vijay-papanaboina/Frontbase-Backend.git)
 - Cloudflare Worker repo: [frontbase_cloudflare_worker](https://github.com/Vijay-papanaboina/frontbase_cloudflare_worker)
 
 ## Features
 
-- GitHub login via backend; cookie-based session
-- Repository list, workflows setup, deploy/redeploy
-- Set env vars per repo prior to deployment
+- GitHub login via OAuth
+- Repository list with deployment status
+- One-click workflow setup (injects GitHub Action)
+- Environment variable configuration per repo
 - Deployment status polling and details
-- Protected routes and responsive UI
-- Theme support
+- Responsive UI with dark theme
 
 ## Architecture
-
-- Vite + React + Tailwind + Zustand + React Router
-- API calls use `fetch` with `credentials: "include"`
-- SPA routing; Vercel rewrite for all routes to `/`
-
-### Architecture
 
 ```mermaid
 flowchart TB
@@ -66,12 +62,15 @@ sequenceDiagram
     participant KV
     participant Worker
 
-    User->>Frontend: Login
+    User->>Frontend: Click Login
     Frontend->>Backend: GET /api/auth/github
-    Backend->>GitHub: OAuth redirect
-    GitHub-->>Backend: Callback with code
+    Backend-->>User: Redirect to GitHub OAuth
+    User->>GitHub: Authorize app
+    GitHub-->>Frontend: Redirect to /callback?code=xxx
+    Frontend->>Backend: GET /api/auth/github/callback?code=xxx
     Backend->>GitHub: Exchange code for token
-    Backend-->>Frontend: Set JWT cookie, redirect to /dashboard
+    Backend-->>Frontend: Set JWT cookie
+    Frontend->>Frontend: Redirect to /dashboard
 
     Frontend->>Backend: GET /api/github/repositories
     Backend->>GitHub: Fetch user repos
@@ -80,13 +79,13 @@ sequenceDiagram
     User->>Frontend: Click "Setup Workflow"
     Frontend->>Backend: POST /api/github/workflows/:id/setup
     Backend->>GitHub: Inject secret (ENV_ACCESS_TOKEN)
-    Backend->>GitHub: Create deploy.yml file
+    Backend->>GitHub: Create deploy.yml workflow
     Backend->>GitHub: Trigger workflow dispatch
 
-    GitHub->>GitHub: Run workflow (user's minutes)
-    GitHub->>Backend: POST /api/upload/:id (zip file)
+    GitHub->>GitHub: Run build workflow
+    GitHub->>Backend: POST /api/upload/:id (zip)
     Backend->>R2: Upload extracted files
-    Backend->>KV: Set subdomain mapping
+    Backend->>KV: Set subdomain → folder mapping
 
     User->>Worker: Visit subdomain.frontbase.space
     Worker->>KV: Lookup mapping
@@ -172,11 +171,9 @@ npm run dev
 In your GitHub OAuth App settings:
 
 - **Homepage URL**: `http://localhost:5173`
-- **Callback URL**: `http://localhost:3000/api/auth/github/callback`
+- **Callback URL**: `http://localhost:5173/callback`
 
 ## Environment Variables
-
-Create `.env` in `frontend/`:
 
 | Variable           | Description          | Example                 |
 | ------------------ | -------------------- | ----------------------- |
@@ -184,21 +181,17 @@ Create `.env` in `frontend/`:
 
 ## Deployment (Vercel)
 
-1. Add environment variable:
-   - `VITE_BACKEND_URL`: `https://your-backend.example.com`
+1. Add environment variable: `VITE_BACKEND_URL`
 2. Ensure backend CORS allows the deployed frontend origin
 3. `vercel.json` includes SPA rewrite (all paths → `/`)
 
-**Cookies**: Backend sets secure cookies in production; deploy frontend over HTTPS.
-
 ## Troubleshooting
 
-| Issue                  | Solution                                               |
-| ---------------------- | ------------------------------------------------------ |
-| CORS / 401 errors      | Check `VITE_BACKEND_URL` and backend CORS allowlist    |
-| Cookies not sent       | Ensure `credentials: "include"` and matching protocols |
-| Blank route on refresh | Verify `vercel.json` is deployed                       |
-| Build errors           | Confirm env vars use `VITE_` prefix                    |
+| Issue                  | Solution                                                |
+| ---------------------- | ------------------------------------------------------- |
+| CORS / 401 errors      | Check `VITE_BACKEND_URL` and backend CORS allowlist     |
+| Cookies not sent       | Ensure `credentials: "include"` and HTTPS in production |
+| Blank route on refresh | Verify `vercel.json` is deployed                        |
 
 ## Cross-Links
 
