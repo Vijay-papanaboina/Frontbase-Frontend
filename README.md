@@ -76,12 +76,19 @@ sequenceDiagram
     participant Worker
 
     User->>Frontend: Click Login
+    User->>Frontend: Click Login
     Frontend->>Backend: GET /api/auth/github
     Backend-->>User: Redirect to GitHub OAuth
     User->>GitHub: Authorize app
     GitHub-->>Frontend: Redirect to /callback?code=xxx
     Frontend->>Backend: GET /api/auth/github/callback?code=xxx
+    Backend-->>User: Redirect to GitHub OAuth
+    User->>GitHub: Authorize app
+    GitHub-->>Frontend: Redirect to /callback?code=xxx
+    Frontend->>Backend: GET /api/auth/github/callback?code=xxx
     Backend->>GitHub: Exchange code for token
+    Backend-->>Frontend: Set JWT cookie
+    Frontend->>Frontend: Redirect to /dashboard
     Backend-->>Frontend: Set JWT cookie
     Frontend->>Frontend: Redirect to /dashboard
 
@@ -93,11 +100,15 @@ sequenceDiagram
     Frontend->>Backend: POST /api/github/workflows/:id/setup
     Backend->>GitHub: Inject secret (ENV_ACCESS_TOKEN)
     Backend->>GitHub: Create deploy.yml workflow
+    Backend->>GitHub: Create deploy.yml workflow
     Backend->>GitHub: Trigger workflow dispatch
 
     GitHub->>GitHub: Run build workflow
     GitHub->>Backend: POST /api/upload/:id (zip)
+    GitHub->>GitHub: Run build workflow
+    GitHub->>Backend: POST /api/upload/:id (zip)
     Backend->>R2: Upload extracted files
+    Backend->>KV: Set subdomain → folder mapping
     Backend->>KV: Set subdomain → folder mapping
 
     User->>Worker: Visit subdomain.frontbase.space
@@ -152,12 +163,27 @@ frontend/
 
 > See [Backend README](https://github.com/Vijay-papanaboina/Frontbase-Backend#getting-your-api-keys) for step-by-step key setup.
 
+## Free Tier - No Cost to Run
+
+| Service            | Free Quota                                |
+| ------------------ | ----------------------------------------- |
+| GitHub Actions     | Unlimited (public repos)                  |
+| Cloudflare R2      | 10 GB storage, 1M writes, 10M reads/month |
+| Cloudflare KV      | 1 GB storage, 100K reads/day              |
+| Cloudflare Workers | 100K requests/day                         |
+
+> See [Backend README](https://github.com/Vijay-papanaboina/Frontbase-Backend#getting-your-api-keys) for step-by-step key setup.
+
 ## Quick Start (Full Stack)
 
 ### Prerequisites
 
 - Node.js 18+
 - PostgreSQL database
+- GitHub OAuth App ([setup guide](https://github.com/Vijay-papanaboina/Frontbase-Backend#1-github-oauth-app))
+- Cloudflare account ([setup guide](https://github.com/Vijay-papanaboina/Frontbase-Backend#2-cloudflare-r2-bucket))
+- **Domain name** (to serve deployed sites via the Worker)
+  - 💡 _Tip:for practice, you can get a domain for ~$1/year from registrars like Hostinger, Namecheap, Porkbun_
 - GitHub OAuth App ([setup guide](https://github.com/Vijay-papanaboina/Frontbase-Backend#1-github-oauth-app))
 - Cloudflare account ([setup guide](https://github.com/Vijay-papanaboina/Frontbase-Backend#2-cloudflare-r2-bucket))
 - **Domain name** (to serve deployed sites via the Worker)
@@ -198,6 +224,7 @@ In your GitHub OAuth App settings:
 
 - **Homepage URL**: `http://localhost:5173`
 - **Callback URL**: `http://localhost:5173/callback`
+- **Callback URL**: `http://localhost:5173/callback`
 
 ## Environment Variables
 
@@ -208,11 +235,17 @@ In your GitHub OAuth App settings:
 ## Deployment (Vercel)
 
 1. Add environment variable: `VITE_BACKEND_URL`
+1. Add environment variable: `VITE_BACKEND_URL`
 2. Ensure backend CORS allows the deployed frontend origin
 3. `vercel.json` includes SPA rewrite (all paths → `/`)
 
 ## Troubleshooting
 
+| Issue                  | Solution                                                |
+| ---------------------- | ------------------------------------------------------- |
+| CORS / 401 errors      | Check `VITE_BACKEND_URL` and backend CORS allowlist     |
+| Cookies not sent       | Ensure `credentials: "include"` and HTTPS in production |
+| Blank route on refresh | Verify `vercel.json` is deployed                        |
 | Issue                  | Solution                                                |
 | ---------------------- | ------------------------------------------------------- |
 | CORS / 401 errors      | Check `VITE_BACKEND_URL` and backend CORS allowlist     |
