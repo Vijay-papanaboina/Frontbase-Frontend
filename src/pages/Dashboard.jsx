@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "@/store/auth";
 import { Button } from "@/components/ui/button";
@@ -9,139 +9,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  AlertTriangle,
-  CheckCircle,
-  ExternalLink,
-  RefreshCw,
-  GitBranchPlus,
-  Rocket,
-  Wand2,
-} from "lucide-react";
+import { AlertTriangle, RefreshCw, GitBranchPlus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ReactIcon from "@/assets/react.svg";
 import EnvDialog from "@/components/EnvDialog";
-
-const RepoStatus = ({ status }) => {
-  if (status === "deployed") {
-    return (
-      <Badge className="bg-green-500/10 text-green-400 border-green-500/20">
-        <CheckCircle className="mr-2 h-4 w-4" />
-        Deployed
-      </Badge>
-    );
-  }
-  if (status === "deploying") {
-    return (
-      <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">
-        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-        Deploying...
-      </Badge>
-    );
-  }
-  return (
-    <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">
-      <AlertTriangle className="mr-2 h-4 w-4" />
-      Setup required
-    </Badge>
-  );
-};
-
-// Framework options and their defaults
-const FRAMEWORKS = [
-  {
-    label: "React (CRA)",
-    value: "react",
-    icon: "⚛️",
-    buildCommand: "npm run build",
-    outputFolder: "build",
-  },
-  {
-    label: "Vite",
-    value: "vite",
-    icon: "⚡",
-    buildCommand: "npm run build",
-    outputFolder: "dist",
-  },
-  {
-    label: "Vue.js",
-    value: "vue",
-    icon: "💚",
-    buildCommand: "npm run build",
-    outputFolder: "dist",
-  },
-  {
-    label: "Angular",
-    value: "angular",
-    icon: "🅰️",
-    buildCommand: "ng build --configuration production",
-    outputFolder: "dist",
-  },
-  {
-    label: "Next.js",
-    value: "nextjs",
-    icon: "▲",
-    buildCommand: "npm run build",
-    outputFolder: ".next",
-  },
-  {
-    label: "Svelte",
-    value: "svelte",
-    icon: "🧡",
-    buildCommand: "npm run build",
-    outputFolder: "dist",
-  },
-  {
-    label: "Nuxt.js",
-    value: "nuxt",
-    icon: "💚",
-    buildCommand: "npm run generate",
-    outputFolder: "dist",
-  },
-  {
-    label: "SvelteKit",
-    value: "sveltekit",
-    icon: "🧡",
-    buildCommand: "npm run build",
-    outputFolder: "build",
-  },
-  {
-    label: "Astro",
-    value: "astro",
-    icon: "🚀",
-    buildCommand: "npm run build",
-    outputFolder: "dist",
-  },
-  {
-    label: "Remix",
-    value: "remix",
-    icon: "🎸",
-    buildCommand: "npm run build",
-    outputFolder: "build",
-  },
-  {
-    label: "Custom",
-    value: "custom",
-    icon: "⚙️",
-    buildCommand: "",
-    outputFolder: "",
-  },
-];
+import RepoTable from "@/components/RepoTable";
+import RepoCard from "@/components/RepoCard";
+import { useRepos } from "@/hooks/useRepos";
+import { pollDeploymentStatus } from "@/hooks/useDeployments";
+import { FRAMEWORKS } from "@/config/frameworks";
 
 const Dashboard = () => {
   const { user } = useAuthStore();
-  const [repos, setRepos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { repos, loading, error, refetch: fetchRepos } = useRepos();
   const [settingUp, setSettingUp] = useState({});
   const [envModalOpen, setEnvModalOpen] = useState(false);
   const [envVars, setEnvVars] = useState([{ key: "", value: "" }]);
@@ -149,95 +29,7 @@ const Dashboard = () => {
   const [framework, setFramework] = useState(FRAMEWORKS[0].value);
   const [buildCommand, setBuildCommand] = useState(FRAMEWORKS[0].buildCommand);
   const [outputFolder, setOutputFolder] = useState(FRAMEWORKS[0].outputFolder);
-  const [deployments, setDeployments] = useState([]);
-  const [deploymentsLoading, setDeploymentsLoading] = useState(false);
-  const [deploymentsError, setDeploymentsError] = useState(null);
   const navigate = useNavigate();
-
-  const fetchRepos = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/github/repositories`,
-        {
-          credentials: "include",
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch repositories");
-      }
-      const data = await response.json();
-      setRepos(Array.isArray(data.repositories) ? data.repositories : []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRepos();
-  }, []);
-
-  useEffect(() => {
-    const fetchDeployments = async () => {
-      if (!repos.length) return;
-      setDeploymentsLoading(true);
-      setDeploymentsError(null);
-      try {
-        const repo = repos[0];
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/github/deployments/${
-            repo.id
-          }/status`,
-          { credentials: "include" }
-        );
-        if (!response.ok) throw new Error("Failed to fetch deployments");
-        const data = await response.json();
-        setDeployments(Array.isArray(data) ? data : data ? [data] : []);
-      } catch (err) {
-        setDeploymentsError(err.message);
-      } finally {
-        setDeploymentsLoading(false);
-      }
-    };
-    fetchDeployments();
-  }, [repos]);
-
-  const handleSetupWorkflow = async (repoId, owner, repoName) => {
-    setSettingUp((prev) => ({ ...prev, [`${owner}/${repoName}`]: true }));
-    try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/api/github/workflows/${repoId}/setup`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            repoName: repoName,
-            ownerLogin: owner,
-            envVars: envVars,
-            framework: framework,
-            buildCommand: buildCommand,
-            outputFolder: outputFolder,
-          }),
-        }
-      );
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to setup workflow");
-      }
-      await fetchRepos();
-    } catch (err) {
-      console.error(err);
-      alert(`Failed to setup workflow: ${err.message}`);
-    } finally {
-      setSettingUp((prev) => ({ ...prev, [`${owner}/${repoName}`]: false }));
-    }
-  };
 
   const openEnvModal = (repo) => {
     setSelectedRepo(repo);
@@ -253,20 +45,6 @@ const Dashboard = () => {
     setSelectedRepo(null);
   };
 
-  const handleEnvVarChange = (idx, field, value) => {
-    setEnvVars((prev) =>
-      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
-    );
-  };
-
-  const addEnvVar = () => {
-    setEnvVars((prev) => [...prev, { key: "", value: "" }]);
-  };
-
-  const removeEnvVar = (idx) => {
-    setEnvVars((prev) => prev.filter((_, i) => i !== idx));
-  };
-
   const handleFrameworkChange = (value) => {
     setFramework(value);
     const fw = FRAMEWORKS.find((f) => f.value === value);
@@ -276,10 +54,9 @@ const Dashboard = () => {
 
   const handleDeployWithEnv = async () => {
     if (!selectedRepo) return;
-    setSettingUp((prev) => ({
-      ...prev,
-      [`${selectedRepo.owner.login}/${selectedRepo.name}`]: true,
-    }));
+    const repoKey = `${selectedRepo.owner.login}/${selectedRepo.name}`;
+
+    setSettingUp((prev) => ({ ...prev, [repoKey]: true }));
     try {
       const env = envVars.filter((e) => e.key.trim() !== "");
       const response = await fetch(
@@ -300,42 +77,18 @@ const Dashboard = () => {
           }),
         }
       );
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to setup workflow");
       }
-      // Start polling for deployment status
-      const pollDeploymentStatus = async (repoId, onSuccess, onFailure) => {
-        for (let i = 0; i < 40; i++) {
-          // poll up to 200 seconds
-          const res = await fetch(
-            `${
-              import.meta.env.VITE_BACKEND_URL
-            }/api/github/deployments/${repoId}/status`,
-            { credentials: "include" }
-          );
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.status === "completed") {
-              if (data.conclusion === "success") {
-                onSuccess(data);
-                return;
-              } else {
-                onFailure(data.conclusion);
-                return;
-              }
-            }
-          }
-          await new Promise((resolve) => setTimeout(resolve, 5000));
-        }
-        onFailure("timeout");
-      };
+
+      // Poll for deployment status
       await pollDeploymentStatus(
         selectedRepo.id,
         async (deployment) => {
           await fetchRepos();
           closeEnvModal();
-          // Redirect to deployment details page
           navigate(`/deployments/${deployment.workflowRunId || deployment.id}`);
         },
         (conclusion) => {
@@ -346,10 +99,7 @@ const Dashboard = () => {
       console.error(err);
       alert(`Failed to setup workflow: ${err.message}`);
     } finally {
-      setSettingUp((prev) => ({
-        ...prev,
-        [`${selectedRepo.owner.login}/${selectedRepo.name}`]: false,
-      }));
+      setSettingUp((prev) => ({ ...prev, [repoKey]: false }));
     }
   };
 
@@ -377,7 +127,8 @@ const Dashboard = () => {
       <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] -z-10"></div>
       {envModalOpen && (
         <div className="absolute inset-0 z-20 backdrop-blur-sm bg-popover/30" />
-      )}{" "}
+      )}
+
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Welcome back,{" "}
@@ -389,6 +140,7 @@ const Dashboard = () => {
           Manage your projects and deployments from this dashboard.
         </p>
       </div>
+
       <Card className="bg-background border-border shadow-2xl">
         <CardHeader className="border-b border-border">
           <CardTitle className="text-foreground flex items-center">
@@ -420,201 +172,33 @@ const Dashboard = () => {
               </div>
             ) : (
               repos.map((repo) => (
-                <div
+                <RepoCard
                   key={repo.id}
-                  className="mb-4 p-4 rounded-lg border bg-background shadow"
-                >
-                  <div className="font-bold text-foreground mb-1">
-                    <a
-                      href={repo.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline flex items-center group"
-                    >
-                      {repo.full_name}
-                      <ExternalLink className="ml-2 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </a>
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-semibold">Visibility:</span>{" "}
-                    {repo.private ? "Private" : "Public"}
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-semibold">Status:</span>{" "}
-                    <RepoStatus status={repo.deployStatus} />
-                  </div>
-                  <div className="mt-2">
-                    {repo.deployStatus === "deployed" ? (
-                      <Button
-                        size="sm"
-                        className="bg-green-700 text-foreground w-full"
-                        disabled
-                      >
-                        <Rocket className="mr-2 h-4 w-4" />
-                        Deployed
-                      </Button>
-                    ) : repo.deployStatus === "deploying" ? (
-                      <Button
-                        size="sm"
-                        className="bg-yellow-500 text-foreground w-full"
-                        disabled
-                      >
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Deploying...
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="bg-primary hover:bg-primary/80 text-primary-foreground w-full"
-                        onClick={() => openEnvModal(repo)}
-                        disabled={settingUp[`${repo.owner.login}/${repo.name}`]}
-                      >
-                        {settingUp[`${repo.owner.login}/${repo.name}`] ? (
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Wand2 className="mr-2 h-4 w-4" />
-                        )}
-                        {settingUp[`${repo.owner.login}/${repo.name}`]
-                          ? "Setting up..."
-                          : "Setup Workflow"}
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  repo={repo}
+                  isSettingUp={settingUp[`${repo.owner.login}/${repo.name}`]}
+                  onSetup={openEnvModal}
+                />
               ))
             )}
           </div>
-          {/* Desktop/tablet: Table layout */}
-          <div className="w-full overflow-x-auto sm:rounded-lg hidden sm:block">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-background/50">
-                  <TableHead className="text-foreground min-w-[120px]">
-                    Name
-                  </TableHead>
-                  <TableHead className="text-foreground min-w-[80px] hidden sm:table-cell">
-                    Visibility
-                  </TableHead>
-                  <TableHead className="text-foreground min-w-[100px]">
-                    Status
-                  </TableHead>
-                  <TableHead className="text-right text-foreground min-w-[120px]">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  [...Array(8)].map((_, i) => (
-                    <TableRow
-                      key={i}
-                      className="border-border h-15 text-[15px]"
-                    >
-                      <TableCell className="min-w-[120px]">
-                        <Skeleton className="h-6 w-100 rounded-md bg-muted-foreground/30" />
-                      </TableCell>
-                      <TableCell className="min-w-[80px] hidden sm:table-cell">
-                        <Skeleton className="h-6 w-16 rounded-full bg-muted-foreground/30" />
-                      </TableCell>
-                      <TableCell className="min-w-[100px]">
-                        <Skeleton className="h-6 w-32 rounded-full bg-muted-foreground/30" />
-                      </TableCell>
-                      <TableCell className="min-w-[120px]">
-                        <Skeleton className="h-8 w-32 ml-auto rounded-md bg-muted-foreground/30" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : repos.length === 0 ? (
-                  <TableRow className="border-border h-15 text-[15px]">
-                    <TableCell
-                      colSpan={4}
-                      className="h-48 text-center text-muted-foreground"
-                    >
-                      No repositories found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  repos.map((repo) => (
-                    <TableRow
-                      key={repo.id}
-                      className="border-border hover:bg-background/50 transition-colors h-15 text-[15px]"
-                    >
-                      <TableCell className="font-medium text-foreground min-w-[120px]">
-                        <a
-                          href={repo.html_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:underline flex items-center group"
-                        >
-                          {repo.full_name}
-                          <ExternalLink className="ml-2 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                        </a>
-                      </TableCell>
-                      <TableCell className="min-w-[80px] hidden sm:table-cell">
-                        <Badge
-                          variant={repo.private ? "secondary" : "outline"}
-                          className="border-border bg-background text-muted-foreground"
-                        >
-                          {repo.private ? "Private" : "Public"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="min-w-[100px]">
-                        <RepoStatus status={repo.deployStatus} />
-                      </TableCell>
-                      <TableCell className="text-right min-w-[120px]">
-                        {repo.deployStatus === "deployed" ? (
-                          <Button
-                            size="sm"
-                            className="bg-green-700 text-foreground"
-                            disabled
-                          >
-                            <Rocket className="mr-2 h-4 w-4" />
-                            Deployed
-                          </Button>
-                        ) : repo.deployStatus === "deploying" ? (
-                          <Button
-                            size="sm"
-                            className="bg-yellow-500 text-foreground"
-                            disabled
-                          >
-                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                            Deploying...
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className="bg-primary hover:bg-primary/80 text-primary-foreground"
-                            onClick={() => openEnvModal(repo)}
-                            disabled={
-                              settingUp[`${repo.owner.login}/${repo.name}`]
-                            }
-                          >
-                            {settingUp[`${repo.owner.login}/${repo.name}`] ? (
-                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <Wand2 className="mr-2 h-4 w-4" />
-                            )}
-                            {settingUp[`${repo.owner.login}/${repo.name}`]
-                              ? "Setting up..."
-                              : "Setup Workflow"}
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+
+          {/* Desktop: Table layout */}
+          <RepoTable
+            repos={repos}
+            loading={loading}
+            settingUp={settingUp}
+            onSetup={openEnvModal}
+          />
         </CardContent>
       </Card>
+
       <EnvDialog
         open={envModalOpen}
         onOpenChange={setEnvModalOpen}
         frameworks={FRAMEWORKS}
         reactIcon={ReactIcon}
         framework={framework}
-        setFramework={setFramework}
+        setFramework={handleFrameworkChange}
         buildCommand={buildCommand}
         setBuildCommand={setBuildCommand}
         outputFolder={outputFolder}
