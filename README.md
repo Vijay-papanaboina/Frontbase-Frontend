@@ -16,6 +16,19 @@
 - Deployment status polling and details
 - Responsive UI with dark theme
 
+## Design Decisions & Trade-offs
+
+| ✅ Advantages                                                      | ⚠️ Trade-offs                                                          |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| **Zero build costs** - Uses GitHub Actions (free for public repos) | **Workflow injection** - Creates files in user's repo                  |
+| **Unlimited builds** - No server limits                            | **Secret injection** - Adds `ENV_ACCESS_TOKEN` to repo secrets         |
+| **Familiar CI/CD** - Users see builds in their Actions tab         | **Public repos only** - By design, to minimize security exposure       |
+| **Scalable** - GitHub handles compute                              | **Requires user trust** - Users grant `public_repo` + `workflow` scope |
+
+> **Why public repos only?** Since we inject workflows and secrets into user repositories, limiting to public repos reduces the security surface. Users can inspect the workflow file we create and understand exactly what runs.
+
+> **Why inject a secret?** The workflow needs to authenticate with our backend to upload built files. The injected `ENV_ACCESS_TOKEN` allows secure uploads to `POST /api/upload/:id`.
+
 ## Architecture
 
 ```mermaid
@@ -128,14 +141,27 @@ frontend/
   vercel.json              # SPA rewrites
 ```
 
+## Free Tier - No Cost to Run
+
+| Service            | Free Quota                                |
+| ------------------ | ----------------------------------------- |
+| GitHub Actions     | Unlimited (public repos)                  |
+| Cloudflare R2      | 10 GB storage, 1M writes, 10M reads/month |
+| Cloudflare KV      | 1 GB storage, 100K reads/day              |
+| Cloudflare Workers | 100K requests/day                         |
+
+> See [Backend README](https://github.com/Vijay-papanaboina/Frontbase-Backend#getting-your-api-keys) for step-by-step key setup.
+
 ## Quick Start (Full Stack)
 
 ### Prerequisites
 
 - Node.js 18+
 - PostgreSQL database
-- GitHub OAuth App (create at https://github.com/settings/developers)
-- Cloudflare account with R2 bucket and KV namespace
+- GitHub OAuth App ([setup guide](https://github.com/Vijay-papanaboina/Frontbase-Backend#1-github-oauth-app))
+- Cloudflare account ([setup guide](https://github.com/Vijay-papanaboina/Frontbase-Backend#2-cloudflare-r2-bucket))
+- **Domain name** (to serve deployed sites via the Worker)
+  - 💡 _Tip:for practice, you can get a domain for ~$1/year from registrars like Hostinger, Namecheap, Porkbun_
 
 ### 1. Clone Both Repos
 
