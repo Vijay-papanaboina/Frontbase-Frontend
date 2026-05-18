@@ -16,7 +16,7 @@ import EnvDialog from "@/components/EnvDialog";
 import RepoTable from "@/components/RepoTable";
 import RepoCard from "@/components/RepoCard";
 import { useRepos } from "@/hooks/useRepos";
-import { pollDeploymentStatus } from "@/hooks/useDeployments";
+import { watchDeploymentStatus } from "@/hooks/useDeployments";
 import { FRAMEWORKS } from "@/config/frameworks";
 
 const Dashboard = () => {
@@ -75,7 +75,7 @@ const Dashboard = () => {
             buildCommand,
             outputFolder,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -83,23 +83,34 @@ const Dashboard = () => {
         throw new Error(errorData.message || "Failed to setup workflow");
       }
 
-      // Poll for deployment status
-      await pollDeploymentStatus(
+      // Watch deployment status (SSE with polling fallback)
+      const cleanup = watchDeploymentStatus(
         selectedRepo.id,
-        async (deployment) => {
+        (statusData) => {
+          // Status update callback (optional logging)
+          console.log("Deployment status update:", statusData);
+        },
+        async (completionData) => {
+          // Success callback
           await fetchRepos();
           closeEnvModal();
-          navigate(`/deployments/${deployment.workflowRunId || deployment.id}`);
+          navigate(
+            `/deployments/${completionData.workflowRunId || selectedRepo.id}`,
+          );
+          cleanup(); // Cleanup on success
+          setSettingUp((prev) => ({ ...prev, [repoKey]: false })); // Set to false on success
         },
-        (conclusion) => {
-          alert(`Deployment failed: ${conclusion}`);
-        }
+        (error) => {
+          // Failure callback
+          alert(`Deployment failed: ${error}`);
+          setSettingUp((prev) => ({ ...prev, [repoKey]: false }));
+          cleanup(); // Cleanup on failure
+        },
       );
     } catch (err) {
       console.error(err);
       alert(`Failed to setup workflow: ${err.message}`);
-    } finally {
-      setSettingUp((prev) => ({ ...prev, [repoKey]: false }));
+      setSettingUp((prev) => ({ ...prev, [repoKey]: false })); // Ensure state is reset on initial setup error
     }
   };
 
